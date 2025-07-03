@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🌟 Smart Quote Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+  body {
+    margin: 0; padding: 40px 20px; font-family: 'Montserrat', sans-serif;
+    background-size: cover; background-position: center;
+    color: #fff; text-align: center;
+    transition: background-color 0.5s ease, color 0.5s ease;
+    background-color: #0072ff;
+    user-select: none;
+  }
+  .container {
+    background: rgba(0, 0, 0, 0.55);
+    max-width: 720px;
+    margin: auto;
+    padding: 30px 30px 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 35px rgba(0,0,0,0.6);
+  }
+  h1 {
+    margin-bottom: 30px;
+    font-weight: 700;
+    font-size: 3em;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.7);
+  }
+  #quote {
+    font-size: 1.8em;
+    min-height: 140px;
+    line-height: 1.6;
+    margin: 35px 0 45px;
+    padding: 28px 22px;
+    border-radius: 15px;
+    background: rgba(255 255 255 / 0.15);
+    box-shadow: 0 0 25px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.9s ease;
+    user-select: text;
+    white-space: pre-wrap;
+  }
+  #quote.visible {
+    opacity: 1;
+  }
+  select, button {
+    padding: 14px 22px;
+    font-size: 1.1em;
+    border-radius: 12px;
+    border: none;
+    margin: 12px 10px 10px 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    user-select: none;
+    outline-offset: 2px;
+  }
+  select {
+    background: #fff;
+    color: #0072ff;
+    min-width: 140px;
+  }
+  button {
+    background: #0072ff;
+    color: white;
+    box-shadow: 0 5px 18px #0056b3;
+    min-width: 110px;
+  }
+  button:hover, select:hover {
+    background-color: #0056b3;
+    color: #fff;
+  }
+  #copyStatus {
+    margin-top: 14px;
+    font-weight: 700;
+    min-height: 24px;
+    color: #ffff66;
+    user-select: none;
+    font-size: 1.1em;
+    min-height: 26px;
+  }
+  footer {
+    margin-top: 50px;
+    font-size: 0.9em;
+    color: #ddd;
+    user-select: none;
+  }
+  #autoTimerLabel {
+    font-size: 1em;
+    color: #eee;
+    user-select: none;
+  }
+  @media (max-width: 600px) {
+    body { padding: 25px 12px; }
+    .container { padding: 20px 20px 30px; }
+    h1 { font-size: 2.2em; }
+    #quote { font-size: 1.4em; min-height: 120px; margin: 25px 0 35px; }
+    select, button { font-size: 1em; padding: 12px 18px; min-width: 100px; margin: 8px 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🌟 Smart Quote Generator</h1>
+
+  <div>
+    <select id="languageSelector" title="Select Language" aria-label="Select Language">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+    </select>
+
+    <select id="bgSelector" title="Select Background" aria-label="Select Background">
+      <option value="sunset">🌇 Sunset</option>
+      <option value="evening">🌆 Evening</option>
+      <option value="night">🌃 Night</option>
+      <option value="cherry">🌸 Cherry Blossom</option>
+      <option value="rose">🌹 Rose Garden</option>
+      <option value="forest">🌲 Forest</option>
+    </select>
+
+    <select id="voiceGender" title="Voice Gender" aria-label="Select Voice Gender">
+      <option value="female">👩 Female</option>
+      <option value="male">👨 Male</option>
+    </select>
+
+    <button id="installBtn" style="display:none;">⬇️ Install App</button>
+  </div>
+
+  <div id="autoTimerDiv" style="margin: 10px 0;">
+    <label id="autoTimerLabel">
+      <input type="checkbox" id="autoTimerToggle" />
+      🔄 Auto New Quote every 10 seconds
+    </label>
+  </div>
+
+  <div id="quote" aria-live="polite" role="textbox" tabindex="0">Click "New Quote" to start!</div>
+
+  <div>
+    <button id="newQuoteBtn">🔁 New Quote</button>
+    <button id="copyBtn">📋 Copy</button>
+    <button id="downloadBtn">💾 Download</button>
+    <button id="speakBtn">🔊 Speak</button>
+    <button id="translateBtn">🌐 Translate</button>
+    <button id="shareBtn">📤 Share</button>
+  </div>
+
+  <div id="copyStatus" role="alert" aria-live="assertive"></div>
+</div>
+
+<footer>Made with ❤️ — Fully Offline & PWA Ready</footer>
+
+<script>
+(() => {
+  // Background image URLs (updated working URLs)
+  const backgrounds = {
+    sunset: "https://images.unsplash.com/photo-1501973801540-537f08ccae7b?auto=format&fit=crop&w=1600&q=80",
+    evening: "https://images.unsplash.com/photo-1533038590840-1cde6e668a91?auto=format&fit=crop&w=1600&q=80",
+    night: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80",
+    cherry: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1600&q=80", // fixed cherry blossom
+    rose: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80",
+    forest: "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=1600&q=80"
+  };
+
+  // Quotes database
+  const quotes = {
+    en: [
+      "Believe you can and you're halfway there.",
+      "Your limitation—it’s only your imagination.",
+      "Push yourself, because no one else is going to do it for you.",
+      "Great things never come from comfort zones.",
+      "Dream it. Wish it. Do it.",
+      "Success doesn’t just find you. You have to go out and get it.",
+      "The harder you work for something, the greater you'll feel when you achieve it.",
+      "Don’t watch the clock; do what it does. Keep going.",
+      "Sometimes later becomes never. Do it now.",
+      "Small things make big days."
+    ],
+    hi: [
+      "आप विश्वास करें कि आप कर सकते हैं, तो आप आधे रास्ते पर हैं।",
+      "आपकी सीमा केवल आपकी कल्पना है।",
+      "खुद को प्रेरित करें, क्योंकि कोई और इसे आपके लिए नहीं करेगा।",
+      "महान चीजें कभी आराम क्षेत्र से नहीं आती हैं।",
+      "सपना देखें। इच्छा करें। करें।",
+      "सफलता खुद आपको नहीं मिलती। आपको इसे पाने के लिए बाहर जाना होगा।",
+      "जिसके लिए आप कड़ी मेहनत करते हैं, वह सफलता आपको बेहतर महसूस कराएगी।",
+      "घड़ी को मत देखें; वह जो करती है, करें। चलते रहें।",
+      "कभी-कभी बाद में कभी नहीं बन जाता। अभी करें।",
+      "छोटी चीजें बड़े दिन बनाती हैं।"
+    ],
+    es: [
+      "Cree que puedes y ya estás a mitad de camino.",
+      "Tu limitación es solo tu imaginación.",
+      "Empújate, porque nadie más lo hará por ti.",
+      "Las grandes cosas nunca vienen de zonas de confort.",
+      "Sueña. Desea. Hazlo.",
+      "El éxito no te encuentra solo. Tienes que salir y conseguirlo.",
+      "Cuanto más duro trabajes por algo, mejor te sentirás cuando lo logres.",
+      "No mires el reloj; haz lo que hace. Sigue adelante.",
+      "A veces después se convierte en nunca. Hazlo ahora.",
+      "Las pequeñas cosas hacen grandes días."
+    ],
+    fr: [
+      "Croyez que vous pouvez et vous êtes à mi-chemin.",
+      "Votre limitation est seulement votre imagination.",
+      "Poussez-vous, car personne d'autre ne le fera pour vous.",
+      "Les grandes choses ne viennent jamais des zones de confort.",
+      "Rêvez. Souhaitez. Faites-le.",
+      "Le succès ne vous trouve pas tout seul. Vous devez aller le chercher.",
+      "Plus vous travaillez dur pour quelque chose, mieux vous vous sentirez quand vous l'obtiendrez.",
+      "Ne regardez pas l'horloge; faites ce qu'elle fait. Continuez.",
+      "Parfois, plus tard devient jamais. Faites-le maintenant.",
+      "Les petites choses font de grandes journées."
+    ]
+  };
+
+  // State
+  let currentLang = 'en';
+  let currentQuoteIndex = 0;
+  let showingTranslated = false;
+  let deferredPrompt = null;
+  let currentVoiceGender = 'female';
+  let autoTimerEnabled = false;
+  let autoTimerId = null;
+
+  // Elements
+  const quoteEl = document.getElementById('quote');
+  const langSel = document.getElementById('languageSelector');
+  const bgSel = document.getElementById('bgSelector');
+  const genderSel = document.getElementById('voiceGender');
+  const newQuoteBtn = document.getElementById('newQuoteBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const speakBtn = document.getElementById('speakBtn');
+  const translateBtn = document.getElementById('translateBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const installBtn = document.getElementById('installBtn');
+  const copyStatus = document.getElementById('copyStatus');
+  const autoTimerToggle = document.getElementById('autoTimerToggle');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  // Utilities
+  function setBackground(name) {
+    if (backgrounds[name]) {
+      document.body.style.backgroundImage = `url(${backgrounds[name]})`;
+    }
+  }
+
+  function getRandomQuoteIndex(lang) {
+    return Math.floor(Math.random() * quotes[lang].length);
+  }
+
+  function showQuote(index, lang) {
+    quoteEl.classList.remove('visible');
+    setTimeout(() => {
+      quoteEl.textContent = quotes[lang][index];
+      quoteEl.classList.add('visible');
+    }, 250);
+  }
+
+  function newQuote() {
+    currentQuoteIndex = getRandomQuoteIndex(currentLang);
+    showingTranslated = false;
+    showQuote(currentQuoteIndex, currentLang);
+  }
+
+  function copyQuote() {
+    const textToCopy = quoteEl.textContent;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      copyStatus.textContent = "Copied to clipboard!";
+      setTimeout(() => { copyStatus.textContent = ""; }, 2000);
+    }).catch(() => {
+      copyStatus.textContent = "Failed to copy!";
+      setTimeout(() => { copyStatus.textContent = ""; }, 2000);
+    });
+  }
+
+  // Download current quote as txt file
+  function downloadQuote() {
+    const text = quoteEl.textContent;
+    const blob = new Blob([text], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quote-${currentLang}-${currentQuoteIndex + 1}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Get best voice for current language and gender
+  function getBestVoice(lang, gender) {
+    const voices = speechSynthesis.getVoices();
+    if (!voices.length) return null;
+
+    // Prefer exact language and gender in voice name or lang
+    let filteredVoices = voices.filter(v => v.lang.toLowerCase().startsWith(lang === 'hi' ? 'hi' : 'en'));
+
+    // Helper to check gender by voice name keywords
+    function isGenderMatch(voiceName, gender) {
+      voiceName = voiceName.toLowerCase();
+      if (gender === 'female') {
+        return voiceName.includes('female') || voiceName.includes('woman') || voiceName.includes('zira') || voiceName.includes('susan') || voiceName.includes('mary') || voiceName.includes('gina') || voiceName.includes('female') || voiceName.includes('girl');
+      }
+      if (gender === 'male') {
+        return voiceName.includes('male') || voiceName.includes('man') || voiceName.includes('david') || voiceName.includes('mark') || voiceName.includes('john') || voiceName.includes('michael') || voiceName.includes('male') || voiceName.includes('boy');
+      }
+      return false;
+    }
+
+    let voice = filteredVoices.find(v => isGenderMatch(v.name, gender));
+    if (!voice && filteredVoices.length > 0) {
+      voice = filteredVoices[0]; // fallback
+    }
+    return voice || null;
+  }
+
+  // Speak quote with selected voice
+  function speakQuote() {
+    if (!('speechSynthesis' in window)) {
+      alert("Speech Synthesis not supported in your browser.");
+      return;
+    }
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(quoteEl.textContent);
+    const voice = getBestVoice(currentLang, currentVoiceGender);
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else {
+      // fallback to general lang tag
+      utterance.lang = currentLang === 'hi' ? 'hi-IN' : 'en-US';
+    }
+    speechSynthesis.speak(utterance);
+  }
+
+  // Toggle translation: English <-> selected language
+  function toggleTranslation() {
+    if (showingTranslated) {
+      // Show original language quote
+      showQuote(currentQuoteIndex, currentLang);
+      showingTranslated = false;
+    } else {
+      if (currentLang === 'en') {
+        // Show Hindi quote for translation if available
+        if (quotes['hi'][currentQuoteIndex]) {
+          showQuote(currentQuoteIndex, 'hi');
+          showingTranslated = true;
+        } else {
+          // No translation available, just notify user
+          copyStatus.textContent = "Translation not available!";
+          setTimeout(() => { copyStatus.textContent = ""; }, 2000);
+        }
+      } else if (currentLang === 'hi') {
+        // Show English
+        showQuote(currentQuoteIndex, 'en');
+        showingTranslated = true;
+      } else {
+        // For es/fr toggle with English if available
+        if (quotes['en'][currentQuoteIndex]) {
+          showQuote(currentQuoteIndex, 'en');
+          showingTranslated = true;
+        } else {
+          copyStatus.textContent = "Translation not available!";
+          setTimeout(() => { copyStatus.textContent = ""; }, 2000);
+        }
+      }
+    }
+  }
+
+  // Share app URL or fallback copy link
+  async function shareApp() {
+    const shareData = {
+      title: 'Smart Quote Generator',
+      text: 'Check out this awesome Smart Quote Generator app!',
+      url: window.location.href
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy URL to clipboard
+        await navigator.clipboard.writeText(shareData.url);
+        copyStatus.textContent = "App URL copied! Share it anywhere.";
+        setTimeout(() => { copyStatus.textContent = ""; }, 3000);
+      }
+    } catch (err) {
+      alert('Sharing failed or cancelled.');
+    }
+  }
+
+  // Auto timer functions
+  function startAutoTimer() {
+    stopAutoTimer();
+    autoTimerId = setInterval(() => {
+      newQuote();
+      if (autoTimerEnabled) speakQuote();
+    }, 10000);
+  }
+  function stopAutoTimer() {
+    if (autoTimerId) clearInterval(autoTimerId);
+    autoTimerId = null;
+  }
+
+  // PWA Install prompt handling
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const choiceResult = await deferredPrompt.userChoice;
+    if (choiceResult.outcome === 'accepted') {
+      installBtn.style.display = 'none';
+    }
+    deferredPrompt = null;
+  });
+
+  // Event listeners
+  langSel.addEventListener('change', () => {
+    currentLang = langSel.value;
+    newQuote();
+  });
+
+  bgSel.addEventListener('change', () => {
+    setBackground(bgSel.value);
+  });
+
+  genderSel.addEventListener('change', () => {
+    currentVoiceGender = genderSel.value;
+  });
+
+  newQuoteBtn.addEventListener('click', () => {
+    newQuote();
+  });
+
+  copyBtn.addEventListener('click', () => {
+    copyQuote();
+  });
+
+  speakBtn.addEventListener('click', () => {
+    speakQuote();
+  });
+
+  translateBtn.addEventListener('click', () => {
+    toggleTranslation();
+  });
+
+  shareBtn.addEventListener('click', () => {
+    shareApp();
+  });
+
+  autoTimerToggle.addEventListener('change', () => {
+    autoTimerEnabled = autoTimerToggle.checked;
+    if (autoTimerEnabled) startAutoTimer();
+    else stopAutoTimer();
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    downloadQuote();
+  });
+
+  // Init voices after they load
+  function loadVoices() {
+    return new Promise(resolve => {
+      let voices = speechSynthesis.getVoices();
+      if (voices.length) resolve(voices);
+      else {
+        speechSynthesis.onvoiceschanged = () => {
+          voices = speechSynthesis.getVoices();
+          resolve(voices);
+        };
+      }
+    });
+  }
+
+  // Initialize app
+  async function init() {
+    await loadVoices();
+    // Set initial BG & quote
+    setBackground(bgSel.value);
+    newQuote();
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>
